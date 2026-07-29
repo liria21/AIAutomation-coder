@@ -1,0 +1,638 @@
+{
+  "name": "checkpoint1_liria_sacks",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "ROL: Sos el asistente interno de trámites de OSEF (obra social/cobertura de salud). Tu usuario es siempre un agente/empleado de OSEF que está atendiendo una consulta de un afiliado, médico o prestador — sin importar si esa consulta llegó por chat directo, por un mail que el agente copió y pegó, o por un WhatsApp del celular de guardia.\n\nÁMBITO: Respondés únicamente sobre trámites, procedimientos, coberturas y normativa interna de OSEF (resoluciones, manuales de procedimiento, RRHH, misiones y funciones, nomencladores, convenios). Cualquier otro tema queda fuera de tu alcance: informá amablemente que no podés ayudar con eso.\n\nOBJETIVO: Ayudar al agente de OSEF a resolver la consulta usando exclusivamente la información de la base de conocimiento (buscar_base_conocimiento). Si la respuesta implica más de un paso o hay múltiples opciones para el consultante, estructurala como lista con letras (a, b, c...) o números, cada ítem en su propia línea. Si es una respuesta directa de un solo dato, respondé en 1 a 3 oraciones. Tono claro y profesional, indicando de qué procedimiento o resolución sale la respuesta. \n\nREGLAS Y ESCALAMIENTO:\n1. SIEMPRE buscá primero en la base de conocimiento con buscar_base_conocimiento antes de responder.\n2. NUNCA inventes datos, plazos, montos ni políticas. Si la base no tiene la respuesta, decilo explícitamente y sugerí transferir a un humano, pero debes referirte al “humano” como agente de OSEF\n3. Podés usar información con ámbito=privado (RRHH, resoluciones internas) como contexto para entender el circuito y orientar mejor al agente, PERO si la respuesta final está destinada a comunicarse hacia afuera (a un afiliado, médico o prestador), debe basarse EXCLUSIVAMENTE en filas con ámbito=público. Si la única info disponible es privada para ese caso, informá que se debe transferir a un humano en vez de responder directamente al tercero.\n4. No tenés permitido prometer reembolsos, aprobar trámites ni modificar registros: solo informás y orientás.\n5. Al final de CADA respuesta, agregá una línea nueva con el siguiente formato exacto (sin texto adicional en esa línea): [[AMBITO:PUBLICO]], [[AMBITO:PRIVADO]] o [[AMBITO:SIN_DATOS]], según el tipo de información que hayas usado predominantemente para construir tu respuesta. \nAdemás, agregá SIEMPRE al final: [[DERIVADO:SI]] si tu respuesta sugiere transferir/derivar el caso a un humano, o [[DERIVADO:NO]] si respondiste con información completa de la base.\nEsta etiqueta es solo para registro interno del sistema.\n\n6. No uses formato Markdown (asteriscos, guiones, etc.) en tus respuestas, escribí en texto plano.\n",
+          "maxIterations": 8
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "522abaa7-c304-4b63-89ff-59cc28c424fa",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        304,
+        176
+      ],
+      "id": "293b103b-a767-4635-8076-46ca297bf118",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-4-5-20250929",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        208
+      ],
+      "id": "712fa7b0-f8a0-4bcb-b8bd-2b45f483346c",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "TOLuk6C29t2HAzIL",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "744b765c-724a-49ff-b390-abecb09b513a",
+              "name": "estado",
+              "value": "derivado",
+              "type": "string"
+            },
+            {
+              "id": "7bf1ff41-9793-4f72-970c-5baaeb6bb435",
+              "name": "derivado",
+              "value": "si",
+              "type": "string"
+            },
+            {
+              "id": "3e380f16-e713-4d9e-b264-ad30246b1fd8",
+              "name": "ambito",
+              "value": "={{ $('Extraer tags').item.json.ambito }}",
+              "type": "string"
+            },
+            {
+              "id": "bce95112-9e80-4a5d-b59c-f360b14429a4",
+              "name": "output",
+              "value": "={{ $('Extraer tags').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        -80
+      ],
+      "id": "8330940e-4d35-40ca-8a2b-61117e56fa4e",
+      "name": "Marcar derivado",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "744b765c-724a-49ff-b390-abecb09b513a",
+              "name": "estado",
+              "value": "respondido",
+              "type": "string"
+            },
+            {
+              "id": "7bf1ff41-9793-4f72-970c-5baaeb6bb435",
+              "name": "derivado",
+              "value": "no",
+              "type": "string"
+            },
+            {
+              "id": "ac7bfbbd-c47c-42de-b32d-4ff6df4de2b3",
+              "name": "ambito",
+              "value": "={{ $('Extraer tags').item.json.ambito }}",
+              "type": "string"
+            },
+            {
+              "id": "ee6f8c72-44d3-4397-853b-8657ceb1deb2",
+              "name": "output",
+              "value": "={{ $('Extraer tags').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        64
+      ],
+      "id": "97b59523-2bf8-471d-b142-9ab0bfaa7ec0",
+      "name": "Marcar respondido",
+      "alwaysOutputData": false,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mI_wt8Nea3G3uwzOfv5_GDjz9JNDk4ps5G3J-ZtjNBs",
+          "mode": "list",
+          "cachedResultName": "Log_Asistente_01",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mI_wt8Nea3G3uwzOfv5_GDjz9JNDk4ps5G3J-ZtjNBs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mI_wt8Nea3G3uwzOfv5_GDjz9JNDk4ps5G3J-ZtjNBs/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $('Chat OSEF').item.json.sessionId }}",
+            "fecha_hora": "={{ $now  }}",
+            "consulta": "={{ $('Chat OSEF').item.json.chatInput }}",
+            "respuesta": "={{ $json.output }}",
+            "observaciones": "={{ \"Generado por Agente IA - Checkpoint1\" }}",
+            "estado": "={{ $json.estado }}",
+            "ambito": "={{ $json.ambito }}",
+            "derivado": "={{ $json.derivado }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_hora",
+              "displayName": "fecha_hora",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "consulta",
+              "displayName": "consulta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "respuesta",
+              "displayName": "respuesta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ambito",
+              "displayName": "ambito",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "derivado",
+              "displayName": "derivado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "observaciones",
+              "displayName": "observaciones",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1168,
+        0
+      ],
+      "id": "27855b5d-d099-4d15-b6bd-6983a899167d",
+      "name": "Log de respuestas",
+      "retryOnFail": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Dovc4qyCDeqfOEzb",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Get row(s) in sheet in Google Sheets\nBusca información en la base de conocimiento oficial de OSEF (planilla con columnas id, familia, pregunta, respuesta, ámbito, fuente). Cada fila representa un trámite, procedimiento o normativa de OSEF ya resuelto y verificado.\n\nUsala SIEMPRE como primer paso ante cualquier consulta sobre afiliación, cartilla médica, prestadores, autorizaciones, RRHH, resoluciones o procedimientos internos, antes de redactar cualquier respuesta.\n\nLa columna 'ámbito' indica si la fila o trámite es público (se puede comunicar directamente a un afiliado, médico o prestador) o privado (solo sirve como contexto interno para el agente de OSEF, nunca se cita textualmente a un tercero).\n\nSi la búsqueda no devuelve filas relevantes, NO inventes una respuesta: indica que no hay información disponible y sugerí transferir el caso a un humano.\n",
+        "documentId": {
+          "__rl": true,
+          "value": "17CO_yFNiKlyUwzkBpxcTffXjj28IGXScSLr0Jzs1XXo",
+          "mode": "list",
+          "cachedResultName": "KB_OSEF",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17CO_yFNiKlyUwzkBpxcTffXjj28IGXScSLr0Jzs1XXo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17CO_yFNiKlyUwzkBpxcTffXjj28IGXScSLr0Jzs1XXo/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        496,
+        256
+      ],
+      "id": "9bd178cf-df6b-488a-bf8b-3debd1bd9248",
+      "name": "KB_OSEF",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Dovc4qyCDeqfOEzb",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "ls.consultoria.datos@gmail.com",
+        "subject": "={{ $json.derivado === 'si' ? '⚠️ Consulta DERIVADA por Agente OSEF' : '✅ Consulta resuelta por Agente OSEF' }}",
+        "message": "=Se registró una nueva interacción del Agente OSEF.<br><br>\n<b>Consulta recibida:</b><br>\n{{ $('Chat OSEF').item.json.chatInput }}<br><br>\n<b>Respuesta del agente:</b><br>\n{{ $json.respuesta.replace(/\\*\\*(.*?)\\*\\*/g, '<b>$1</b>') }}\n<br><br>\n<b>Estado:</b> {{ $json.estado }}<br><br>\n<b>Derivación a humano:</b> {{ $json.derivado }}<br><br>\n<b>SesiónId:</b> {{ $('Chat OSEF').item.json.sessionId }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "07a327c7-f574-474e-bc47-c9b3fe53b14b",
+      "name": "Notificar nueva consulta agente Ai",
+      "webhookId": "3d19c885-d452-43a1-ac8e-0a6b4a3058ed",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "RIl4pFFa76dXcGWd",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c53b4823-1275-4843-95dc-3369894539f6",
+      "name": "Chat OSEF",
+      "webhookId": "639828ce-0ee2-42d7-97a4-48c8bf108f24"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "83b98fcf-4ade-4b88-88c8-7048dd4871f3",
+              "name": "output",
+              "value": "={{ $('Extraer tags').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1536,
+        0
+      ],
+      "id": "f02881e4-7823-4e12-b57a-a220a95f6bfd",
+      "name": "Respuesta al chat",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2e25f8af-9a4d-4048-a5f0-f64cf0c094a6",
+              "leftValue": "={{ $json.output.toLowerCase().includes('transferir') || $json.output.toLowerCase().includes('derivar') || $json.output.toLowerCase().includes('no tengo información') || \n$json.output.toLowerCase().includes('no tengo datos') || \n$json.output.toLowerCase().includes('no cuento con') || \n$json.output.toLowerCase().includes('sin datos') || \n$json.output.toLowerCase().includes('sin datos') || \n$json.derivado.toLowerCase().includes('si') ||\n$json.ambito.toLowerCase().includes('sin datos')\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        720,
+        0
+      ],
+      "id": "e8d99e2b-221e-4006-a272-ade7fccff325",
+      "name": "Respondido - Derivado",
+      "retryOnFail": true,
+      "alwaysOutputData": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c73aeceb-2470-4707-88f8-4ad6ae524e54",
+              "name": "=ambito",
+              "value": "={{ $json.output.match(/\\[\\[AMBITO:(\\w+)\\]\\]/)?.[1]?.toLowerCase() || 'no_detectado' }}",
+              "type": "string"
+            },
+            {
+              "id": "e82338c1-5009-4145-977f-c6f4ce8a2fc3",
+              "name": "derivado",
+              "value": "={{ $json.output.match(/\\[\\[DERIVADO:(\\w+)\\]\\]/)?.[1]?.toLowerCase() || 'no_detectado' }}",
+              "type": "string"
+            },
+            {
+              "id": "e82c2d96-4113-4047-a848-c4845c1581ca",
+              "name": "=output",
+              "value": "={{ $json.output.replace(/\\[\\[AMBITO:\\w+\\]\\]/, '').replace(/\\[\\[DERIVADO:\\w+\\]\\]/, '').trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        0
+      ],
+      "id": "c9307eda-634a-4158-9ae2-00206657635b",
+      "name": "Extraer tags",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "content": "### Gobernanza de datos (ámbito público/privado)\nEl agente ve TODA la KB (público + privado) como contexto interno.\nPero toda respuesta hacia un tercero (afiliado/médico/prestador) debe\nbasarse SOLO en ámbito=público. Si solo hay info privada disponible,\nse debe derivar a un humano en vez de responder directo.\n\nControl de acceso: el canal del chat ES la prueba de identidad\n(uso exclusivo interno de agentes OSEF). Se descartó preguntar\n\"¿sos agente?\" por ser autodeclaración insegura.",
+        "height": 352,
+        "width": 272,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        176,
+        -368
+      ],
+      "id": "edb52ea8-66a3-4686-9818-7c4cdb7e7d1d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### Sistema de doble-tag para logging preciso\nEl agente marca su propia respuesta con [[AMBITO:...]] y [[DERIVADO:...]]\nal final del texto. Este nodo extrae esos valores a campos propios\ny limpia el texto antes de mostrarlo al usuario.\n\nPor qué: detectar el escalamiento por palabras clave (ej. \"transferir\",\n\"derivar\") es poco confiable, porque el modelo tiene muchas formas\nválidas de decir lo mismo. El tag explícito es 100% preciso.",
+        "height": 384,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        544,
+        -400
+      ],
+      "id": "78b6c466-4154-4ce6-9f27-0c5efd42e30b",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "### Observabilidad doble\nGoogle Sheets = registro estructurado y consultable (auditoría real).\nGmail = notificación puntual para un humano (alerta rápida).\nLimitación conocida: tokens_estimados no se registra en este\ncheckpoint (pendiente).",
+        "height": 192,
+        "width": 304,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        -208
+      ],
+      "id": "6f1ea6a5-2d25-4bf3-b575-4b7b8c077492",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Extraer tags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar derivado": {
+      "main": [
+        [
+          {
+            "node": "Log de respuestas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar respondido": {
+      "main": [
+        [
+          {
+            "node": "Log de respuestas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "KB_OSEF": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log de respuestas": {
+      "main": [
+        [
+          {
+            "node": "Notificar nueva consulta agente Ai",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat OSEF": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar nueva consulta agente Ai": {
+      "main": [
+        [
+          {
+            "node": "Respuesta al chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respondido - Derivado": {
+      "main": [
+        [
+          {
+            "node": "Marcar derivado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar respondido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer tags": {
+      "main": [
+        [
+          {
+            "node": "Respondido - Derivado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "dynamic",
+    "timezone": "America/Argentina/Buenos_Aires",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "b0229b86-4922-4c8b-b4e2-8ea3a3b61cdf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ac898bf8bdda4fd5b6f69074af54d5a3fa93219e36d6b48bc183ee44bb468a11"
+  },
+  "id": "oeyj8oTS6dI144iG",
+  "tags": []
+}
